@@ -95,7 +95,7 @@ proc digest*(state: var HashState): string =
     ## please note this procedure breaks the hasher internal state and re-initializes it.
     result = ""
 
-    state.hw.bytes[state.reading] = state.hw.bytes[state.reading] xor 0x06
+    state.hw.bytes[state.reading] = state.hw.bytes[state.reading] xor 0x01
     state.hw.bytes[135] = state.hw.bytes[135] xor 0x80
 
     state.keccakF1600()
