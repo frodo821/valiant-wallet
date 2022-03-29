@@ -1,3 +1,4 @@
 tests/*
 !tests/*.nim
 !tests/*.nims
+.DS_Store
