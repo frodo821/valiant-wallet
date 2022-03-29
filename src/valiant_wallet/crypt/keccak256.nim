@@ -1,3 +1,6 @@
+import bigints, strutils
+export bigints, strutils
+
 type
     HashWords {.union.} = object
         words: array[25, uint64]
@@ -6,6 +9,8 @@ type
     HashState* = ref object
         hw: HashWords
         reading: 0..135
+
+    Digestable* = string or openArray[byte] or openArray[uint8] or BigInt
 
 const iotaConstants: array[24, uint64] = [
         0x0000000000000001'u64, 0x0000000000008082'u64, 0x800000000000808a'u64,
@@ -90,6 +95,11 @@ proc update*[T: string or openArray[byte]](state: var HashState, bytes: T) =
         if state.reading == 0:
             state.keccakF1600()
 
+template maybePadding*(str: string): string = (if (str.len and 1) == 1: "0" & str else: str)
+
+template update*(state: var HashState, number: BigInt) =
+    update(state, number.toString(16).maybePadding.parseHexStr)
+
 proc digest*(state: var HashState): string =
     ## calculate digest
     ## please note this procedure breaks the hasher internal state and re-initializes it.
@@ -115,8 +125,17 @@ proc hex*(str: string): string =
         result.add(hexDigits[cast[uint8](c) shr 4])
         result.add(hexDigits[cast[uint8](c) and 0x0f])
 
+template digestOf*[T: Digestable](bytes: T): string =
+    ## calculate digest of given data
+    block:
+        var state = initState()
+        state.update(bytes)
+        state.digest()
+
+template hexDigestOf*[T: Digestable](bytes: T): string =
+    ## calculate digest of given data
+    bytes.digestOf().hex()
+
 when isMainModule:
-    var state = initState()
-    state.update("Hello, Nim-lang!!")
-    let dig = state.digest().hex()
+    let dig = hexDigestOf("Hello, Nim-lang!!")
     assert dig == "0f3be9c96b48b5e4dd07da8e0141ba75ee3b6fcbc75cb1323225d09084344af1"
