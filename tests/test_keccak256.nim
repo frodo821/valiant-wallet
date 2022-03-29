@@ -26,4 +26,4 @@ suite "can calculate keccak256 hash":
         check(state.digest().hex() == "0d9c394787b1daacaef8aa8839a2432c9bee40010e087e2983910c0cd4ff78ad")
 
     test "hash of empty bytes":
-        check(state.digest().hex() == "0d9c394787b1daacaef8aa8839a2432c9bee40010e087e2983910c0cd4ff78ad")
+        check(state.digest().hex() == "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470")
