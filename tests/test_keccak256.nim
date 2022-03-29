@@ -15,15 +15,15 @@ suite "can calculate keccak256 hash":
 
     test "hash a string":
         state.update("Hello, Nim!!")
-        check(state.digest().hex() == "e6f7ad5e0daca135c3166b10defe6004b51c7a787b666e4fdf1ec75d59f8c2a0")
+        check(state.digest().hex() == "0d9c394787b1daacaef8aa8839a2432c9bee40010e087e2983910c0cd4ff78ad")
 
     test "hash an array of byte":
         state.update("Hello, Nim!!".toOpenArrayByte(0, 11))
-        check(state.digest().hex() == "e6f7ad5e0daca135c3166b10defe6004b51c7a787b666e4fdf1ec75d59f8c2a0")
+        check(state.digest().hex() == "0d9c394787b1daacaef8aa8839a2432c9bee40010e087e2983910c0cd4ff78ad")
 
     test "hash an array of uint8 array":
         state.update([72'u8, 101'u8, 108'u8, 108'u8, 111'u8, 44'u8, 32'u8, 78'u8, 105'u8, 109'u8, 33'u8, 33'u8])
-        check(state.digest().hex() == "e6f7ad5e0daca135c3166b10defe6004b51c7a787b666e4fdf1ec75d59f8c2a0")
+        check(state.digest().hex() == "0d9c394787b1daacaef8aa8839a2432c9bee40010e087e2983910c0cd4ff78ad")
 
     test "hash of empty bytes":
-        check(state.digest().hex() == "a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a")
+        check(state.digest().hex() == "0d9c394787b1daacaef8aa8839a2432c9bee40010e087e2983910c0cd4ff78ad")
