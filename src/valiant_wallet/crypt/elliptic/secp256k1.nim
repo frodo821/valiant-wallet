@@ -5,7 +5,7 @@ export curve
 export bigints
 
 type
-    Secp256k1 = distinct int
+    Secp256k1 = distinct int8
 
 const secp256k1Params = CurveParams(
     P: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F'bi, #'
@@ -19,6 +19,6 @@ const secp256k1Params = CurveParams(
     Name: "secp256k1"
 )
 
-const secp256k1* = Secp256k1(0)
+const secp256k1* = Secp256k1(0'i8)
 
 template params*(self: Secp256k1): CurveParams = secp256k1Params

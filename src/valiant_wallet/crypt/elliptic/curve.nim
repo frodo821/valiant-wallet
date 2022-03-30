@@ -19,6 +19,8 @@ type
 
 template `==`*(x: BigInt, y: int): bool = x == initBigInt(y)
 
+template `==`*(p1: Point, p2: Point): bool = (p1.x == p2.x) and (p1.y == p2.y)
+
 template b(value: int): BigInt = initBigInt(value)
 
 proc toCompressed*(po: Point): BigInt =
@@ -29,8 +31,8 @@ proc toCompressed*(po: Point): BigInt =
 
 proc toUncompressed*(cur: Curve, po: Point): BigInt {.inline.} =
     ## get the uncompressed format of the point
-    let bs = cur.params.BitSize
-    return (((0x04.b shl bs) + po.x) shl bs) + po.y #'
+    let nbits = cur.params.BitSize
+    return (((0x04.initBigInt shl nbits) + po.x) shl nbits) + po.y
 
 proc decomposite*(cur: Curve, po: BigInt): Point {.inline.} =
     ## decomposite the point
@@ -111,7 +113,7 @@ proc jacobian2Affine(cur: Curve, p1: Point, z: BigInt): Point {.inline.} =
         return p1
 
     let zinv = invMod(z, cur.params.P)
-    let zinvsq = (zinv * zinv) mod cur.params.P
+    let zinvsq = zinv * zinv
 
     return Point(x: p1.x * zinvsq, y: p1.y * zinv * zinvsq) mod cur.params.P
 
@@ -131,7 +133,7 @@ proc double*(self: Curve, p: Point): Point {.inline.} =
         let (p, z) = doubledJacobian(self, p, p.affineZ())
         jacobian2Affine(self, p, z)
 
-proc multiply(self: Curve, p1: Point, n: BigInt): Point =
+proc multiply*(self: Curve, p1: Point, n: BigInt): Point =
     if n == 1.b:
         return p1
 
