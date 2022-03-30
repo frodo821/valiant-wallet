@@ -110,7 +110,7 @@ proc doubledJacobian(cur: Curve, p1: Point, z1: BigInt): (Point, BigInt) {.inlin
 
 proc jacobian2Affine(cur: Curve, p1: Point, z: BigInt): Point {.inline.} =
     if z == 0:
-        return p1
+        return Point(x: 0.b, y: 0.b)
 
     let zinv = invMod(z, cur.params.P)
     let zinvsq = zinv * zinv
