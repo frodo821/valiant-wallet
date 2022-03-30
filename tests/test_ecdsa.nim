@@ -38,6 +38,8 @@ suite "elliptic curve operations":
                 x: 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798'bi, #'
                 y: 0xB7C52588D95C3B9AA25B0403F1EEF75702E84BB7597AABE663B82F6F04EF2777'bi #'
             )
+        check:
+            curve.multiply(base, curve.params.N).isInfinite()
 
 suite "generate key pair":
     setup:
