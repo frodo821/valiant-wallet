@@ -2,18 +2,29 @@ import bigints, strutils
 export bigints, strutils
 
 type
+    ## A coordinate in a 2-dimensional space.
     Point* = object
+        ## The x coordinate of the point
         x*: BigInt
+        ## The y coordinate of the point
         y*: BigInt
 
+    ## Elliptic curve parameters
     CurveParams* = object
+        ## The prime modulus
         P*: BigInt
+        ## The order of the curve
         N*: BigInt
+        ## The cofactor of the curve
         B*: BigInt
+        ## The base point
         G*: Point
+        ## The length in bits of the order of the curve
         BitSize*: int64
+        ## The name of the curve
         Name*: string
 
+    ## Elliptic curve
     Curve* = concept x
         x.params() is CurveParams
 
@@ -52,7 +63,7 @@ proc decomposite*(cur: Curve, po: BigInt): Point {.inline.} =
         err.msg = "invalid point."
         raise err
 
-template `mod`*(p: Point, m: BigInt): Point = Point(x: p.x mod m, y: p.y mod m)
+template `mod`*(p: Point, m: BigInt): Point = Point(x: (p.x + m) mod m, y: (p.y + m) mod m)
 
 proc addJacobian(cur: Curve, p1: Point, z1: BigInt, p2: Point, z2: BigInt): (Point, BigInt) {.inline.} =
     if z1 == 0.b:
@@ -60,23 +71,6 @@ proc addJacobian(cur: Curve, p1: Point, z1: BigInt, p2: Point, z2: BigInt): (Poi
 
     if z2 == 0.b:
         return (p1, z1)
-
-    #[
-        Z1Z1 = Z1^2
-        Z2Z2 = Z2^2
-        U1 = X1*Z2Z2
-        U2 = X2*Z1Z1
-        S1 = Y1*Z2*Z2Z2
-        S2 = Y2*Z1*Z1Z1
-        H = U2-U1
-        I = (2*H)^2
-        J = H*I
-        r = 2*(S2-S1)
-        V = U1*I
-        X3 = r^2-J-2*V
-        Y3 = r*(V-X3)-2*S1*J
-        Z3 = ((Z1+Z2)^2-Z1Z1-Z2Z2)*H
-    ]#
 
     let z1z1 = z1 * z1
     let z2z2 = z2 * z2
@@ -161,6 +155,8 @@ proc multiply*(self: Curve, p1: Point, n: BigInt): Point =
 
 proc isInfinite*(po: Point): bool {.inline.} =
     return po.x == 0.b or po.y == 0.b
+
+template `-`*(po: Point): Point = Point(x: po.x, y: -po.y)
 
 template isFinite*(po: Point): bool =
     not po.isInfinite()
