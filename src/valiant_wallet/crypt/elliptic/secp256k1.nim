@@ -19,6 +19,7 @@ const secp256k1Params = CurveParams(
     Name: "secp256k1"
 )
 
+## SECP256K1 curve
 const secp256k1* = Secp256k1(0'i8)
 
 template params*(self: Secp256k1): CurveParams = secp256k1Params
