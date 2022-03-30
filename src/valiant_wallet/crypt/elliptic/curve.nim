@@ -159,4 +159,10 @@ proc multiply*(self: Curve, p1: Point, n: BigInt): Point =
 
     result = jacobian2Affine(self, rp, rz)
 
+proc isInfinite*(po: Point): bool {.inline.} =
+    return po.x == 0.b or po.y == 0.b
+
+template isFinite*(po: Point): bool =
+    not po.isInfinite()
+
 template multiplyBase*(self: Curve, n: BigInt): Point = multiply(self, self.params.G, n)
