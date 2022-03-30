@@ -134,7 +134,7 @@ template digestOf*[T: Digestable](bytes: T): string =
 
 template hexDigestOf*[T: Digestable](bytes: T): string =
     ## calculate digest of given data
-    bytes.digestOf().hex()
+    digestOf[T](bytes).hex()
 
 when isMainModule:
     let dig = hexDigestOf("Hello, Nim-lang!!")
