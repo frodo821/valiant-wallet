@@ -40,7 +40,7 @@ proc createSignature*[T: Digestable](cur: Curve, secret: BigInt, message: T, net
 
         return Signature(
             r: r, s: s,
-            v: 35 + (cast[uint8](networkId and 0x7F) shl 1) + (if (r and 1'bi) == 0: 0 else: 1) #'
+            v: 35 + (cast[uint8](networkId and 0x7F) shl 1) + (if (p.y and 1'bi) == 0: 0 else: 1) #'
         )
 
 proc serialize*(sig: Signature): string =
