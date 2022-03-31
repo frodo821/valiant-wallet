@@ -82,7 +82,7 @@ proc verifySignature*[T: Digestable](cur: Curve, pubkey: BigInt, message: T, sig
     let w = invmod(s, cur.params.N)
     let u1 = (z * w) mod cur.params.N
     let u2 = (r * w) mod cur.params.N
-    let p = cur.add(cur.multiply(cur.params.G, u1), cur.multiply(key, u2)) mod cur.params.N
+    let p = cur.add(cur.multiply(cur.params.G, u1), cur.multiply(key, u2))
 
     return p.x == r
 
