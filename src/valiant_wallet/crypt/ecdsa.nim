@@ -4,8 +4,8 @@ import ./keccak256
 export bigints, curve, keccak256
 
 type
-    KeyPair* = object
-        secret*: BigInt
+    KeyPair* = ref object
+        secret: BigInt
         public*: BigInt
 
     Signature* = object
@@ -18,13 +18,17 @@ let oneb = 1.initBigInt()
 
 template `==`*(s1: Signature, s2: Signature): bool = (s1.r == s2.r and s1.s == s2.s and s1.v == s2.v)
 
-proc generateKeyPair*(cur: Curve, seed: BigInt): KeyPair =
-    result.secret = hexDigestOf(seed).initBigInt(16) mod cur.params.N
-    result.public = cur.derivePubKeyFromSecret(result.secret)
+proc generateKeyPair*(cur: Curve, seed: BigInt): KeyPair {.inline.} =
+    cur.createKeyPairWithSecret(hexDigestOf(seed).initBigInt(16) mod cur.params.N)
+
+proc createKeyPairWithSecret*(cur: Curve, secret: BigInt): KeyPair =
+    new result
+    result.secret = secret
+    result.public = cur.derivePubKeyFromSecret(secret)
 
 proc derivePubKeyFromSecret*(cur: Curve, secret: BigInt): BigInt = cur.toUncompressed(cur.multiplyBase(secret))
 
-proc createSignature*[T: Digestable](cur: Curve, secret: BigInt, message: T, networkId: uint = 1): Signature =
+proc createSignature*[T: Digestable](cur: Curve, keys: KeyPair, message: T, networkId: uint = 1): Signature =
     let z = hexDigestOf(message).substr(0, cast[int](cur.params.BitSize div 4 - 1)).initBigInt(16)
 
     while true:
@@ -35,10 +39,12 @@ proc createSignature*[T: Digestable](cur: Curve, secret: BigInt, message: T, net
         if r == zerob or r > cur.params.N:
             continue
 
-        let s = (invmod(k, cur.params.N) * (z + r * secret)) mod cur.params.N
+        let s = (invmod(k, cur.params.N) * (z + r * keys.secret)) mod cur.params.N
 
         if s == zerob or (s shl 1) > cur.params.N:
             continue
+
+        echo cur.toUncompressed(p).toString(16)
 
         return Signature(
             r: r, s: s,
@@ -165,7 +171,7 @@ proc recoverPubKey*[T: Digestable](cur: Curve, message: T, signature: Signature)
 
     # parity of x coordination of k*G
     # true if x is even
-    let parity = (v and 1) == 0
+    let parity = (v and 1) == 1
 
     if r < zerob or r >= cur.params.N or s < zerob or s >= cur.params.N:
         var err = new ValueError
@@ -173,6 +179,14 @@ proc recoverPubKey*[T: Digestable](cur: Curve, message: T, signature: Signature)
         raise err
 
     let kp = cur.calcPointFromXCoord(r, parity)
-    let rinv = invmod(r, cur.params.P)
 
-    return cur.multiply(cur.add(cur.multiply(kp, s), (-cur.multiply(cur.params.G, z)) mod cur.params.P), rinv)
+    assert cur.isOnCurve(kp)
+
+    echo cur.toUncompressed(kp).toString(16)
+    let rinv = invmod(r, cur.params.P)
+    let u1 = cur.params.P - ((z * rinv) mod cur.params.P)
+    let u2 = (s * rinv) mod cur.params.P
+    let zG = cur.multiplyBase(u1)
+    let skP = cur.multiply(kp, u2)
+
+    return cur.add(skP, zG)
