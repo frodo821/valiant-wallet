@@ -28,6 +28,9 @@ type
     Curve* = concept x
         x.params() is CurveParams
 
+const zerob = 0.initBigInt
+const oneb = 1.initBigInt
+
 template `==`*(x: BigInt, y: int): bool = x == initBigInt(y)
 
 template `==`*(p1: Point, p2: Point): bool = (p1.x == p2.x) and (p1.y == p2.y)
@@ -38,7 +41,7 @@ proc toCompressed*(po: Point): BigInt =
     ## get the compressed format of the point
     ## 
     ## TODO: implement this procedure
-    return 0.b
+    return zerob
 
 proc toUncompressed*(cur: Curve, po: Point): BigInt {.inline.} =
     ## get the uncompressed format of the point
@@ -48,13 +51,13 @@ proc toUncompressed*(cur: Curve, po: Point): BigInt {.inline.} =
 proc decomposite*(cur: Curve, po: BigInt): Point {.inline.} =
     ## decomposite the point
     let bs = cur.params.BitSize
-    let msk = (1.b shl (bs + 1)) - 1.b
+    let msk = (oneb shl (bs + 1)) - oneb
     let highest = po shr (bs shl 1)
     if highest == 0x04.b:
         let y = po and msk
         let x = (po shr bs) and msk
         return Point(x: x, y: y)
-    elif highest == 0x00.b:
+    elif highest == zerob:
         let err = new LibraryError
         err.msg = "not implemented yet."
         raise err
@@ -66,10 +69,10 @@ proc decomposite*(cur: Curve, po: BigInt): Point {.inline.} =
 template `mod`*(p: Point, m: BigInt): Point = Point(x: (p.x + m) mod m, y: (p.y + m) mod m)
 
 proc addJacobian(cur: Curve, p1: Point, z1: BigInt, p2: Point, z2: BigInt): (Point, BigInt) {.inline.} =
-    if z1 == 0.b:
+    if z1 == zerob:
         return (p2, z2)
 
-    if z2 == 0.b:
+    if z2 == zerob:
         return (p1, z1)
 
     let z1z1 = z1 * z1
@@ -104,19 +107,19 @@ proc doubledJacobian(cur: Curve, p1: Point, z1: BigInt): (Point, BigInt) {.inlin
 
 proc jacobian2Affine(cur: Curve, p1: Point, z: BigInt): Point {.inline.} =
     if z == 0:
-        return Point(x: 0.b, y: 0.b)
+        return Point(x: zerob, y: zerob)
 
     let zinv = invMod(z, cur.params.P)
     let zinvsq = zinv * zinv
 
     return Point(x: p1.x * zinvsq, y: p1.y * zinv * zinvsq) mod cur.params.P
 
-proc affineZ(p1: Point): BigInt {.inline.} = (if p1.x == 0.b or p1.y == 0.b: 0.b else: 1.b)
+proc affineZ(p1: Point): BigInt {.inline.} = (if p1.x == zerob or p1.y == zerob: zerob else: oneb)
 
 proc isOnCurve*(self: Curve, point: Point): bool =
     (
         pow(point.y, 2) - self.params.B - pow(point.x, 3)
-    ) mod self.params.P == 0.b
+    ) mod self.params.P == zerob
 
 proc add*(self: Curve, p1: Point, p2: Point): Point =
     let res = addJacobian(self, p1, p1.affineZ(), p2, p2.affineZ())
@@ -128,33 +131,33 @@ proc double*(self: Curve, p: Point): Point {.inline.} =
         jacobian2Affine(self, p, z)
 
 proc multiply*(self: Curve, p1: Point, n: BigInt): Point =
-    if n == 1.b:
+    if n == oneb:
         return p1
 
     if n == 2.b:
         return double(self, p1)
 
-    if n == 0.b:
-        return Point(x: 0.b, y: 0.b)
+    if n == zerob:
+        return Point(x: zerob, y: zerob)
 
     var rz = p1.affineZ()
     var pz = p1.affineZ()
-    var rp = Point(x: 0.b, y: 0.b)
+    var rp = Point(x: zerob, y: zerob)
 
-    var v = 1.b
+    var v = oneb
     while v < n:
         v = v shl 1
 
-    while v > 0.b:
+    while v > zerob:
         (rp, rz) = self.doubledJacobian(rp, rz)
-        if (n and v) != 0.b:
+        if (n and v) != zerob:
             (rp, rz) = self.addJacobian(rp, rz, p1, pz)
         v = v shr 1
 
     result = jacobian2Affine(self, rp, rz)
 
 proc isInfinite*(po: Point): bool {.inline.} =
-    return po.x == 0.b or po.y == 0.b
+    return po.x == zerob or po.y == zerob
 
 template `-`*(po: Point): Point = Point(x: po.x, y: -po.y)
 
