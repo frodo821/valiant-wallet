@@ -100,7 +100,7 @@ proc calcPointFromXCoord(cur: Curve, px: BigInt, parity: bool): Point {.inline.}
     # if P is a prime number congruent with 3 modulo 4,
     # (P+1) / 4 power to ysq is the quadratic residue modulo P to be found
     if (cur.params.P and 0x03.initBigInt) == 3:
-        let y = powmod(ysq, (cur.params.P + oneb) shl 2, cur.params.P)
+        let y = powmod(ysq, (cur.params.P + oneb) shr 2, cur.params.P)
 
         # if parity is even, y must be positive
         if parity:
