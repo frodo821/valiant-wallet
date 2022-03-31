@@ -48,20 +48,21 @@ proc createSignature*[T: Digestable](cur: Curve, secret: BigInt, message: T, net
 proc serialize*(sig: Signature): string =
     var r = sig.r.toString(16)
     var s = sig.s.toString(16)
+    var v = sig.v.toHex(2)
 
     if r.len < 64:
         r = "0".repeat(64 - r.len) & r
     if s.len < 64:
         s = "0".repeat(64 - s.len) & s
 
-    return r.parseHexStr() & s.parseHexStr()
+    return "0x" & r & s & v.toLower
 
 proc deserialize*(sig: string): Signature =
-    let comp = sig.initBigInt(16)
-    let r = (comp shr 8) and ((1'bi shl 256) - 1'bi)
-    let s = comp shr 264
+    let r = sig.substr(2, 65).initBigInt(16)
+    let s = sig.substr(66, 129).initBigInt(16)
+    let v = cast[uint8](sig.substr(130).parseHexInt())
 
-    return Signature(r: r, s: s)
+    return Signature(r: r, s: s, v: v)
 
 proc verifySignature*[T: Digestable](cur: Curve, pubkey: BigInt, message: T, signature: Signature): bool =
     let key = cur.decomposite(pubkey)
