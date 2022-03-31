@@ -162,7 +162,7 @@ proc recoverPubKey*[T: Digestable](cur: Curve, message: T, signature: Signature)
 
     # parity of x coordination of k*G
     # true if x is even
-    let parity = (v and 1) == 1
+    let parity = (v and 1) == 0
 
     if r < zerob or r >= cur.params.N or s < zerob or s >= cur.params.N:
         var err = new ValueError
