@@ -16,6 +16,8 @@ type
 let zerob = 0.initBigInt()
 let oneb = 1.initBigInt()
 
+template `==`*(s1: Signature, s2: Signature): bool = (s1.r == s2.r and s1.s == s2.s and s1.v == s2.v)
+
 proc generateKeyPair*(cur: Curve, seed: BigInt): KeyPair =
     result.secret = hexDigestOf(seed).initBigInt(16) mod cur.params.N
     result.public = cur.derivePubKeyFromSecret(result.secret)
