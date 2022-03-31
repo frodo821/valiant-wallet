@@ -5,6 +5,7 @@ import valiant_wallet/crypt/[ecdsa, elliptic/secp256k1]
 let prikey = 0xc0dec0dec0dec0dec0dec0dec0dec0dec0dec0dec0dec0dec0dec0dec0dec0de'bi #'
 let pubkey = 0x44643bb6b393ac20a6175c713175734a72517c63d6f73a3ca90a15356f2e967da03d16431441c61ac69aeabb7937d333829d9da50431ff6af38536aa262497b27'bi #'
 let curve: Curve = secp256k1.secp256k1
+let kp = curve.createKeyPairWithSecret(prikey)
 let presigned = "0x6a9e75800cfb5302a6ca216ae22d95c333359988aa6a97e472a99c9918c2ff602e9e268db1417f7aae7470e69af2dc7829180a44633c4f9abdcedcb7394f5dfb1b".deserialize()
 let message = "\x19Ethereum Signed Message:\n17Hello, Nim-lang!!"
 
@@ -58,10 +59,10 @@ suite "sign message and find public key":
         check(curve.verifySignature(pubkey, message, presigned))
 
     test "ecdsa signing":
-        check(curve.verifySignature(pubkey, message, curve.createSignature(prikey, message)))
+        check(curve.verifySignature(pubkey, message, curve.createSignature(kp, message)))
 
     test "recover public key from signed message with parity":
-        let sig = curve.createSignature(prikey, message)
+        let sig = curve.createSignature(kp, message)
         let rpk = curve.recoverPubKey(message, sig)
         echo "signature: " & sig.serialize
         check(curve.toUncompressed(rpk).toString(16) == pubkey.toString(16))
