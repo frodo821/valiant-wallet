@@ -42,7 +42,7 @@ proc createSignature*[T: Digestable](cur: Curve, secret: BigInt, message: T, net
 
         return Signature(
             r: r, s: s,
-            v: (if (p.y and 1'bi) == 0: 28 else: 27) #'
+            v: (if (p.y and 1'bi) == 0: 27 else: 28) #'
         )
 
 proc serialize*(sig: Signature): string =
