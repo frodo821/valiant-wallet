@@ -44,11 +44,11 @@ proc createSignature*[T: Digestable](cur: Curve, keys: KeyPair, message: T, netw
         if s == zerob or (s shl 1) > cur.params.N:
             continue
 
-        echo cur.toUncompressed(p).toString(16)
+        let parity = (if (p.y and 1'bi) == zerob: 27'u8 else: 28'u8)
 
         return Signature(
             r: r, s: s,
-            v: (if (p.y and 1'bi) == 0: 27 else: 28) #'
+            v: parity
         )
 
 proc serialize*(sig: Signature): string =
@@ -111,11 +111,11 @@ proc calcPointFromXCoord(cur: Curve, px: BigInt, parity: bool): Point {.inline.}
     if (cur.params.P and 0x03.initBigInt) == 3:
         let y = powmod(ysq, (cur.params.P + oneb) shr 2, cur.params.P)
 
-        # if parity is even, y must be positive
+        # if parity is odd, y must be positive
         if parity:
-            return Point(x: px, y: y)
+            return Point(x: px, y: cur.params.P - y)
         # otherwise, y must be negative
-        return Point(x: px, y: cur.params.P - y)
+        return Point(x: px, y: y)
 
     # otherwise, in short, when P is a prime congruent with 1 modulo 4,
     # we can use the Tonelli-Shanks algorithm to find quadratic residue modulo P.
@@ -182,11 +182,8 @@ proc recoverPubKey*[T: Digestable](cur: Curve, message: T, signature: Signature)
 
     assert cur.isOnCurve(kp)
 
-    echo cur.toUncompressed(kp).toString(16)
-    let rinv = invmod(r, cur.params.P)
-    let u1 = cur.params.P - ((z * rinv) mod cur.params.P)
-    let u2 = (s * rinv) mod cur.params.P
-    let zG = cur.multiplyBase(u1)
-    let skP = cur.multiply(kp, u2)
+    let rinv = invmod(r, cur.params.N)
+    let zG = (-cur.multiplyBase(z)) mod cur.params.P
+    let skP = cur.multiply(kp, s)
 
-    return cur.add(skP, zG)
+    return cur.multiply(cur.add(skP, zG), rinv)
