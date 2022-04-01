@@ -1,4 +1,7 @@
 # Valiant Wallet
+
+![test](https://github.com/frodo821/valiant-wallet/workflows/test/badge.svg)
+
 An Ethereum wallet library fully written in Nim
 
 ## Roadmap

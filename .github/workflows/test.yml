@@ -1,0 +1,35 @@
+---
+name: test
+
+"on":
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - README*
+      - '**.md'
+  pull_request:
+    paths-ignore:
+      - README*
+      - '**.md'
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          # - windows-latest
+          # - macOS-latest
+        nim:
+          - '1.6.4'
+          - '1.6.x'
+          - 'stable'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: jiro4989/setup-nim-action@v1
+        with:
+          nim-version: ${{ matrix.nim }}
+      - run: nimble install -Y
+      - run: nimble test -Y
