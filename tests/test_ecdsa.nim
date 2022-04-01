@@ -62,7 +62,6 @@ suite "sign message and find public key":
         check(curve.verifySignature(pubkey, message, curve.createSignature(kp, message)))
 
     test "recover public key from signed message with parity":
-        let sig = curve.createSignature(kp, message)
-        let rpk = curve.recoverPubKey(message, sig)
-        echo "signature: " & sig.serialize
-        check(curve.toUncompressed(rpk).toString(16) == pubkey.toString(16))
+        check(curve.toUncompressed(
+                curve.recoverPubKey(message, curve.createSignature(kp, message))
+            ).toString(16) == pubkey.toString(16))
