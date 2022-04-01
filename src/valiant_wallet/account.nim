@@ -63,6 +63,9 @@ proc ensureAddress*(maybeAddress: string): Address =
     err.msg = "invalid address"
     raise err
 
+proc createAddressFromPublicKey*(pubkey: BigInt): Address {.inline.} =
+    pubkey.toString(16).substr(1).parseHexStr.hexDigestOf.substr(24).encodeAddress()
+
 proc initAccountWithSecretKey*(secretKey: string): Account =
     if not (secretKey.startsWith("0x") and secretKey.len == 66):
         var err = new ValueError
