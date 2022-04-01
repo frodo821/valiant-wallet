@@ -4,6 +4,7 @@ import valiant_wallet/crypt/[ecdsa, elliptic/secp256k1]
 
 let prikey = 0xc0dec0dec0dec0dec0dec0dec0dec0dec0dec0dec0dec0dec0dec0dec0dec0de'bi #'
 let pubkey = 0x44643bb6b393ac20a6175c713175734a72517c63d6f73a3ca90a15356f2e967da03d16431441c61ac69aeabb7937d333829d9da50431ff6af38536aa262497b27'bi #'
+let public_key = pubkey.toString(16)
 let curve: Curve = secp256k1.secp256k1
 let kp = curve.createKeyPairWithSecret(prikey)
 let presigned = "0x6a9e75800cfb5302a6ca216ae22d95c333359988aa6a97e472a99c9918c2ff602e9e268db1417f7aae7470e69af2dc7829180a44633c4f9abdcedcb7394f5dfb1b".deserialize()
@@ -61,7 +62,19 @@ suite "sign message and find public key":
     test "ecdsa signing":
         check(curve.verifySignature(pubkey, message, curve.createSignature(kp, message)))
 
+    test "recover public key from signature":
+        var sign = "0xa2b6d76c7edaa705a1637ce42974bd3413eaebc8a001516db4fdac01262070fc2c78100188ec8a6ec7f194ae5e145f6efcac9185953262ebc4b23f08794bac7b1c".deserialize()
+        check(curve.toUncompressed(curve.recoverPubKey(message, sign)).toString(16) == public_key)
+        # 4a3ca1d1db156d82d568d05852e46bfda4bccd27180291a4a1de1225bbc5055d0ce2434813b0d55259103779a543aa025e8eefcb4e34988b6fe9ba8de518e55d4
+        sign = "0xa3ca1d1db156d82d568d05852e46bfda4bccd27180291a4a1de1225bbc5055d03bf491ab9e636f5730eb7d132d9361ff6877c6047c613eb25c371a34382386131b".deserialize()
+        check(curve.toUncompressed(curve.recoverPubKey(message, sign)).toString(16) == public_key)
+
     test "recover public key from signed message with parity":
-        check(curve.toUncompressed(
-                curve.recoverPubKey(message, curve.createSignature(kp, message))
-            ).toString(16) == pubkey.toString(16))
+        let sign = curve.createSignature(kp, message)
+        let calculated_public_key = curve.toUncompressed(curve.recoverPubKey(message, sign)).toString(16)
+        let checking = calculated_public_key == public_key
+
+        if not checking:
+            echo "test not passed with sign: " & sign.serialize()
+
+        check(public_key == calculated_public_key)
