@@ -41,10 +41,13 @@ proc createSignature*[T: Digestable](cur: Curve, keys: KeyPair, message: T, netw
 
         let s = (invmod(k, cur.params.N) * (z + r * keys.secret)) mod cur.params.N
 
-        if s == zerob or (s shl 1) > cur.params.N:
+        if s == zerob or s > (cur.params.N shr 1):
             continue
 
         let parity = (if (p.y and 1'bi) == zerob: 27'u8 else: 28'u8)
+
+        # debugEcho "point: " & cur.toUncompressed(p).toString(16)
+        # debugEcho "parity bit: " & $parity & " (" & (if parity == 27: "even" else: "odd") & ")"
 
         return Signature(
             r: r, s: s,
@@ -110,12 +113,17 @@ proc calcPointFromXCoord(cur: Curve, px: BigInt, parity: bool): Point {.inline.}
     # (P+1) / 4 power to ysq is the quadratic residue modulo P to be found
     if (cur.params.P and 0x03.initBigInt) == 3:
         let y = powmod(ysq, (cur.params.P + oneb) shr 2, cur.params.P)
+        let y_parity = (y and oneb) == zerob
 
-        # if parity is odd, y must be positive
-        if parity:
-            return Point(x: px, y: cur.params.P - y)
-        # otherwise, y must be negative
-        return Point(x: px, y: y)
+        # debugEcho "raw y is: " & y.toString(16)
+        # debugEcho "parity is: " & (if parity: "even" else: "odd")
+        # debugEcho "y is: " & (if parity == y_parity: cur.params.P - y else: y).toString(16)
+
+        # if parity is even, y must be negative
+        if parity == y_parity:
+            return Point(x: px, y: y)
+        # otherwise, y must be positive
+        return Point(x: px, y: cur.params.P - y)
 
     # otherwise, in short, when P is a prime congruent with 1 modulo 4,
     # we can use the Tonelli-Shanks algorithm to find quadratic residue modulo P.
@@ -157,11 +165,13 @@ proc calcPointFromXCoord(cur: Curve, px: BigInt, parity: bool): Point {.inline.}
         c = cnsq
         m = j
 
-    # if parity is even, y must be positive
-    if parity:
-        return Point(x: px, y: r)
-    # otherwise, y must be negative
-    return Point(x: px, y: cur.params.P - r)
+    let y_parity = (r and oneb) == zerob
+
+    # if parity is even, y must be negative
+    if parity == y_parity:
+        return Point(x: px, y: cur.params.P - r)
+    # otherwise, y must be positive
+    return Point(x: px, y: r)
 
 proc recoverPubKey*[T: Digestable](cur: Curve, message: T, signature: Signature): Point =
     let z = hexDigestOf(message).substr(0, cast[int](cur.params.BitSize div 4 - 1)).initBigInt(16)
@@ -179,6 +189,8 @@ proc recoverPubKey*[T: Digestable](cur: Curve, message: T, signature: Signature)
         raise err
 
     let kp = cur.calcPointFromXCoord(r, parity)
+
+    # debugEcho cur.toUncompressed(kp).toString(16)
 
     assert cur.isOnCurve(kp)
 
