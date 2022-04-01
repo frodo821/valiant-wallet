@@ -74,4 +74,13 @@ proc initAccountWithSecretKey*(secretKey: string): Account =
     new result
 
     result.keypair = curve.createKeyPairWithSecret(secretKey.substr(2).initBigInt(16))
-    result.address = encodeAddress(result.keypair.public.toString(16).substr(1).parseHexStr.hexDigestOf.substr(24))
+    result.address = result.keypair.public.createAddressFromPublicKey()
+
+template saltify(message: string): string = ("\x19Ethereum Signed Message:\n" & ($message.len) & message)
+
+proc signMessage*(account: Account, message: string): string {.inline.} =
+    return curve.createSignature(account.keypair, message.saltify).serialize()
+
+proc verifySignature*(address: Address, message: string, signature: string): bool =
+    let pubkey = curve.toUncompressed(curve.recoverPubKey(message.saltify, signature.deserialize()))
+    return pubkey.createAddressFromPublicKey() == address
