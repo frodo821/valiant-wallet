@@ -34,17 +34,23 @@ proc encodeAddress(address: string): Address =
     return res.Address
 
 proc isValidAddress*(address: Address): bool =
-    let astr = cast[string](address)
+    let astr = block:
+        let str = cast[string](address)
 
-    if not (astr.len == 42 and astr.startsWith("0x")):
+        if str.startsWith("0x"):
+            str.substr(2)
+        else:
+            str
+
+    if astr.len != 40:
         return false
 
     if astr == astr.toLowerAscii:
         return true
 
-    let digest = astr.toLower.substr(2).digestOf()
+    let digest = astr.toLower.digestOf()
 
-    for i, c in astr.substr(2):
+    for i, c in astr:
         let j = i div 2
         let m = i and 1
         let shouldUpper = (if m == 1: cast[uint8](digest[j]) and 0x0F else: cast[uint8](digest[j]) shr 4) > 7
@@ -58,6 +64,27 @@ proc ensureAddress*(maybeAddress: string): Address =
     let address = maybeAddress.Address
     if address.isValidAddress():
         return address
+
+    var err = new ValueError
+    err.msg = "invalid address"
+    raise err
+
+proc canonicalize*(address: Address): Address =
+    let astr = block:
+        let str = cast[string](address)
+
+        if str.startsWith("0x"):
+            str
+        else:
+            "0x" & str
+
+    if astr.toLower == astr:
+        return astr.encodeAddress
+
+    let addrs = astr.Address
+
+    if addrs.isValidAddress:
+        return addrs
 
     var err = new ValueError
     err.msg = "invalid address"
