@@ -69,6 +69,27 @@ proc ensureAddress*(maybeAddress: string): Address =
     err.msg = "invalid address"
     raise err
 
+proc canonicalize*(address: Address): Address =
+    let astr = block:
+        let str = cast[string](address)
+
+        if str.startsWith("0x"):
+            str
+        else:
+            "0x" & str
+
+    if astr.toLower == astr:
+        return astr.encodeAddress
+
+    let addrs = astr.Address
+
+    if addrs.isValidAddress:
+        return addrs
+
+    var err = new ValueError
+    err.msg = "invalid address"
+    raise err
+
 proc createAddressFromPublicKey*(pubkey: BigInt): Address {.inline.} =
     pubkey.toString(16).substr(1).parseHexStr.hexDigestOf.substr(24).encodeAddress()
 
