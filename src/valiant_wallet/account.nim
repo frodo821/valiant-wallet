@@ -34,17 +34,23 @@ proc encodeAddress(address: string): Address =
     return res.Address
 
 proc isValidAddress*(address: Address): bool =
-    let astr = cast[string](address)
+    let astr = block:
+        let str = cast[string](address)
 
-    if not (astr.len == 42 and astr.startsWith("0x")):
+        if str.startsWith("0x"):
+            str.substr(2)
+        else:
+            str
+
+    if astr.len != 40:
         return false
 
     if astr == astr.toLowerAscii:
         return true
 
-    let digest = astr.toLower.substr(2).digestOf()
+    let digest = astr.toLower.digestOf()
 
-    for i, c in astr.substr(2):
+    for i, c in astr:
         let j = i div 2
         let m = i and 1
         let shouldUpper = (if m == 1: cast[uint8](digest[j]) and 0x0F else: cast[uint8](digest[j]) shr 4) > 7
